@@ -9,7 +9,7 @@ import (
 )
 
 type VM struct {
-	memory     [4096]uint8 // 4096 bit address space
+	memory     [4096]uint8 // 4096 byte address space
 	v          [16]uint8   // 16 8-bit general purpose registers, V0 to VF
 	i          uint16      // 16-bit I register
 	stack      [16]uint16  // 16 16-bit value stack
