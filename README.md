@@ -11,4 +11,5 @@ WebAssembly是⼀种新兴的⽹⻚虚拟机标准。与 JavaScript 需要解释
 
 
 [官网](https://webassembly.org/)
+[官网](https://github.com/golang/go/wiki/WebAssembly#getting-started)
 [官网](https://talks.godoc.org/github.com/chai2010/awesome-go-zh/chai2010/chai2010-golang-wasm.slide#6)
