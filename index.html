@@ -1,197 +1,229 @@
 <!DOCTYPE html>
 <html>
+  <link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet" />
 
-<link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet">
+  <style>
+    :root {
+      --terminal-color: #ffffff;
+    }
+    canvas {
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+    }
+    .page {
+      width: 512px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .screen {
+      width: 512px;
+      height: 256px;
+      border: 1px solid var(--terminal-color);
+      padding: 5px;
+      margin-bottom: 20px;
+    }
 
-<style>
-:root {
-  --terminal-color: #ffffff;
-}
-canvas {
-  image-rendering: -moz-crisp-edges;    
-  image-rendering: -webkit-crisp-edges; 
-  image-rendering: pixelated;           
-}
-.page {
-  width: 512px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.screen {
-  width: 512px;
-  height: 256px;
-  border: 1px solid var(--terminal-color);
-  padding: 5px;
-  margin-bottom: 20px;
-}
+    body {
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      line-height: 22px;
+      color: var(--terminal-color);
+      background-color: black;
+    }
+    h2 {
+      font-size: 50px;
+      text-align: center;
+    }
 
-body {
-  font-family: 'VT323', monospace;
-  font-size: 20px;
-  line-height: 22px;
-  color: var(--terminal-color);
-  background-color: black;
-}
-h2 {
-  font-size: 50px;
-  text-align: center;
-}
+    button {
+      font-family: 'VT323', monospace;
+      font-size: 30px;
+      width: 100px;
+      border: 3px solid var(--terminal-color);
+      color: var(--terminal-color);
+      background-color: black;
+      outline: none;
+      margin-bottom: 10px;
+    }
 
-button {
-  font-family: 'VT323', monospace;
-  font-size: 30px;
-  width: 100px;
-  border: 3px solid var(--terminal-color);
-  color: var(--terminal-color);
-  background-color: black;
-  outline: none;
-  margin-bottom: 10px;
-}
+    button:active {
+      color: black;
+      background-color: var(--terminal-color);
+    }
+  </style>
+  <body>
+    <div class="page">
+      <h2>CHIP-8</h2>
 
-button:active {
-  color: black;
-  background-color: var(--terminal-color);
-}
-</style>
-<body>
-<div class='page'>
-  <h2>CHIP-8</h2>
+      <p>
+        A CHIP-8 interpreter written in Go and compiled to WebAssembly. Choose a
+        ROM and press 'Start' to play!
+      </p>
 
-  <p>A CHIP-8 interpreter written in Go and compiled to WebAssembly. Choose a ROM and press 'Start' to play!</p>
+      <span class="label">ROM:</span>
+      <select id="roms">
+        <option value="15PUZZLE">15PUZZLE</option>
+        <option value="BLINKY">BLINKY</option>
+        <option value="BLITZ">BLITZ</option>
+        <option value="BRIX">BRIX</option>
+        <option value="CONNECT4">CONNECT4</option>
+        <option value="GUESS">GUESS</option>
+        <option value="HIDDEN">HIDDEN</option>
+        <option value="IBM">IBM</option>
+        <option value="INVADERS">INVADERS</option>
+        <option value="KALEID">KALEID</option>
+        <option value="MAZE">MAZE</option>
+        <option value="MERLIN">MERLIN</option>
+        <option value="MISSILE">MISSILE</option>
+        <option value="PONG">PONG</option>
+        <option value="PONG2">PONG2</option>
+        <option value="PUZZLE">PUZZLE</option>
+        <option value="SYZYGY">SYZYGY</option>
+        <option value="TANK">TANK</option>
+        <option value="TETRIS">TETRIS</option>
+        <option value="TICTAC">TICTAC</option>
+        <option value="UFO">UFO</option>
+        <option value="VBRIX">VBRIX</option>
+        <option value="VERS">VERS</option>
+        <option value="WIPEOFF">WIPEOFF</option>
+      </select>
+      <button id="run">Start</button>
 
-  <span class='label'>ROM:</span>
-  <select id='roms'>
-  </select>
-  <button id='run'>Start</button>
+      <div class="screen">
+        <canvas
+          id="canvas"
+          width="64"
+          height="32"
+          style="transform: scale(8); transform-origin: top left"
+        ></canvas>
+      </div>
+    </div>
+    <script src="jquery-3.2.1.min.js"></script>
 
-  <div class='screen'>
-    <canvas id='canvas' width='64' height='32'
-      style='transform: scale(8); transform-origin: top left'></canvas>
-  </div>
-</div>
-  <script src='jquery-3.2.1.min.js'></script>
+    <script src="wasm_exec.js"></script>
 
-<script src="wasm_exec.js"></script>
+    <script>
+      const go = new Go();
+      let mod, inst, bytes;
+      WebAssembly.instantiateStreaming(
+        fetch('chip8.wasm'),
+        go.importObject
+      ).then(async (result) => {
+        mod = result.module;
+        inst = result.instance;
+        // how to wait go-main function to be done?
+        run();
+        $('#roms')[0].value = 'INVADERS';
+        // loadRom('INVADERS');
+        // updateDisplay();
+        window.requestAnimationFrame(runLoop);
+        runLoop();
+      });
 
-<script>
-  const ROMS = [
-    "15PUZZLE",
-    "BLINKY",
-    "BLITZ",
-    "BRIX",
-    "CONNECT4",
-    "GUESS",
-    "HIDDEN",
-    "IBM",
-    "INVADERS",
-    "KALEID",
-    "MAZE",
-    "MERLIN",
-    "MISSILE",
-    "PONG",
-    "PONG2",
-    "PUZZLE",
-    "SYZYGY",
-    "TANK",
-    "TETRIS",
-    "TICTAC",
-    "UFO",
-    "VBRIX",
-    "VERS",
-    "WIPEOFF"
-  ];
-
-  const translateKeys = {
-    49: 0x1, // 1
-    50: 0x2, // 2
-    51: 0x3, // 3
-    52: 0xc, // 4
-    81: 0x4, // Q
-    87: 0x5, // W
-    69: 0x6, // E
-    82: 0xd, // R
-    65: 0x7, // A
-    83: 0x8, // S
-    68: 0x9, // D
-    70: 0xe, // F
-    90: 0xa, // Z
-    88: 0x0, // X
-    67: 0xb, // C
-    86: 0xf  // V
-  };
-
-  const go = new Go();
-	let mod, inst, bytes;
-  WebAssembly.instantiateStreaming(fetch("chip8.wasm"), go.importObject)
-    .then((result) => {
-      mod = result.module;
-      inst = result.instance;
-      run();
-      $("#roms")[0].value = "PONG";
-      loadRom("PONG");
-      window.requestAnimationFrame(runLoop);
-      runLoop()
-  });
-
-  async function run() {
-    await go.run(inst);
-  }
-    
-  const loadRom = rom =>
-  fetch(`roms/${rom}`)
-    .then(i => i.arrayBuffer())
-    .then(buffer => {
-      // write the ROM to memory
-      const rom = new DataView(buffer, 0, buffer.byteLength);
-
-      initMem(rom);
-      updateDisplay();
-    });
-
-  const runLoop = () => {
-    if (running) {
-      for (var i = 0; i < 10; i++) {
-        executeCycle();
+      async function run() {
+        await go.run(inst);
       }
-      decrementTimers();
-    }
-    updateDisplay();
-    window.requestAnimationFrame(runLoop);
-  };
 
-  ROMS.forEach(rom => {
-    $("#roms").append(`<option value='${rom}'>${rom}</option>`);
-  });
+      // const ROMS = [
+      //   '15PUZZLE',
+      //   'BLINKY',
+      //   'BLITZ',
+      //   'BRIX',
+      //   'CONNECT4',
+      //   'GUESS',
+      //   'HIDDEN',
+      //   'IBM',
+      //   'INVADERS',
+      //   'KALEID',
+      //   'MAZE',
+      //   'MERLIN',
+      //   'MISSILE',
+      //   'PONG',
+      //   'PONG2',
+      //   'PUZZLE',
+      //   'SYZYGY',
+      //   'TANK',
+      //   'TETRIS',
+      //   'TICTAC',
+      //   'UFO',
+      //   'VBRIX',
+      //   'VERS',
+      //   'WIPEOFF',
+      // ];
 
-  document.getElementById("roms").addEventListener("change", e => {
-    loadRom(e.target.value);
-  });
+      // ROMS.forEach((rom) => {
+      //   $('#roms').append(`<option value='${rom}'>${rom}</option>`);
+      // });
 
-  let running = false;
-  const runButton = document.getElementById("run");
-  runButton.addEventListener("click", () => {
-    if (running) {
-      running = false;
-      runButton.innerHTML = "Start";
-    } else {
-      running = true;
-      runButton.innerHTML = "Stop";
-    }
-  });
-  
-  document.addEventListener("keydown", event => {
-    if (translateKeys[event.keyCode] != undefined) {
-      keyDown(translateKeys[event.keyCode]);
-    }
-  });
+      // const loadRom = (rom) =>
+      //   fetch(`roms/${rom}`)
+      //     .then((i) => i.arrayBuffer())
+      //     .then((buffer) => {
+      //       // write the ROM to memory
+      //       const rom = new DataView(buffer, 0, buffer.byteLength);
 
-  document.addEventListener("keyup", event => {
-    if (translateKeys[event.keyCode] != undefined) {
-      keyUp(translateKeys[event.keyCode]);
-    }
-  });
+      //       initMem(rom);
+      //       updateDisplay();
+      //     });
+      // document.getElementById('roms').addEventListener('change', (e) => {
+      //   loadRom(e.target.value);
+      // });
 
-</script>
+      let running = false;
+      const runLoop = () => {
+        console.log(123);
+        if (running) {
+          for (var i = 0; i < 8; i++) {
+            executeCycle();
+          }
+          decrementTimers();
+        }
+        updateDisplay();
+        window.requestAnimationFrame(runLoop);
+      };
 
-</body>
+      const runButton = document.getElementById('run');
+      runButton.addEventListener('click', () => {
+        if (running) {
+          running = false;
+          runButton.innerHTML = 'Start';
+        } else {
+          running = true;
+          runButton.innerHTML = 'Stop';
+        }
+      });
+
+      // const translateKeys = {
+      //   49: 0x1, // 1
+      //   50: 0x2, // 2
+      //   51: 0x3, // 3
+      //   52: 0xc, // 4
+      //   81: 0x4, // Q
+      //   87: 0x5, // W
+      //   69: 0x6, // E
+      //   82: 0xd, // R
+      //   65: 0x7, // A
+      //   83: 0x8, // S
+      //   68: 0x9, // D
+      //   70: 0xe, // F
+      //   90: 0xa, // Z
+      //   88: 0x0, // X
+      //   67: 0xb, // C
+      //   86: 0xf, // V
+      // };
+
+      // document.addEventListener("keydown", event => {
+      //   if (translateKeys[event.keyCode] != undefined) {
+      //     keyDown(translateKeys[event.keyCode]);
+      //   }
+      // });
+
+      // document.addEventListener("keyup", event => {
+      //   if (translateKeys[event.keyCode] != undefined) {
+      //     keyUp(translateKeys[event.keyCode]);
+      //   }
+      // });
+    </script>
+  </body>
 </html>

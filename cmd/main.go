@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vyun/chip8"
+	"chip8"
 )
 
 func main() {
