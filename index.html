@@ -104,6 +104,7 @@
     <script>
       const go = new Go();
       let inst;
+      // 这个importObject 参数的作用就是 JavaScript 向 wasm 传入需要调用的JavaScript模块。
       WebAssembly.instantiateStreaming(
         fetch('chip8.wasm'),
         go.importObject

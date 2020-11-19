@@ -1,26 +1,14 @@
-# CHIP-8 Interpreter
+# WebAssembly
 
-A CHIP-8 interpreter written in Go and compiled to WebAssembly so that it can be run in the browser. 
-Based on Colin Eberhardt's implementation of the project [1], which was originally done in Rust.
+WebAssembly是⼀种新兴的⽹⻚虚拟机标准。与 JavaScript 需要解释执行不同的是，wasm字节码和底层机器码很相似可快速装载运行，因此性能相对于 JavaScript 解释执行有了很大的提升。
 
-![GUI](https://imgur.com/eJbzEt2.png)
+它的设计⽬标包括：
 
-## Usage
-
-Build `chip8.wasm` using the Makefile:
-
-    make build
-    
-Start `server.py` to run locally:
-
-    python3 server.py
-    
-Finally, head to `localhost:12345`, choose a ROM, and press "Start" to play.
+⾼可移植性
+⾼安全性
+⾼效率（包括载⼊效率和运⾏效率）
+尽可能⼩的程序体积
 
 
-## References
-
-[1] https://blog.scottlogic.com/2017/12/13/chip8-emulator-webassembly-rust.html  
-[2] http://devernay.free.fr/hacks/chip8/C8TECH10.HTM  
-[3] http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/  
-[4] https://blog.gopheracademy.com/advent-2018/go-in-the-browser/
+[官网](https://webassembly.org/)
+[官网](https://talks.godoc.org/github.com/chai2010/awesome-go-zh/chai2010/chai2010-golang-wasm.slide#6)
