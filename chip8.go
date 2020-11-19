@@ -34,10 +34,11 @@ var keyMap = map[int]int{
 type Chip8 struct {
 	interpreter vm.VM
 	done        chan bool
+	running     bool
 }
 
 func New() *Chip8 {
-	c := Chip8{interpreter: *vm.New(), done: make(chan bool)}
+	c := Chip8{interpreter: *vm.New(), done: make(chan bool), running: false}
 	return &c
 }
 
@@ -48,14 +49,29 @@ func (c *Chip8) Start() {
 	// c.updateDisplay();
 	// Setup callbacks
 	// js.Global().Set("c.", js.FuncOf(c.c.))
-	js.Global().Set("updateDisplay", js.FuncOf(c.updateDisplay))
-	js.Global().Set("executeCycle", js.FuncOf(c.executeCycle))
-	js.Global().Set("decrementTimers", js.FuncOf(c.decrementTimers))
+	// js.Global().Set("updateDisplay", js.FuncOf(c.updateDisplay))
+	// js.Global().Set("executeCycle", js.FuncOf(c.executeCycle))
+	// js.Global().Set("decrementTimers", js.FuncOf(c.decrementT/imers))
 	// js.Global().Set("keyUp", js.FuncOf(c.keyUp))
 	// js.Global().Set("keyDown", js.FuncOf(c.keyDown))
-	c.initMem("INVADERS")
-	fmt.Println("main done")
+	c.loadRom("INVADERS")
+	c.RunLoop()
 	<-c.done
+}
+
+func (c *Chip8) RunLoop() {
+	if c.running {
+		for i := 0; i < 10; i++ {
+			c.executeCycle()
+		}
+		c.decrementTimers()
+	}
+	c.updateDisplay()
+	cb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		c.RunLoop()
+		return nil
+	})
+	js.Global().Call("requestAnimationFrame", cb)
 }
 
 func getElementByID(id string) js.Value {
@@ -79,13 +95,27 @@ func (c *Chip8) initializeEvents() {
 	})
 	cb3 := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		romName := args[0].Get("target").Get("value").String()
-		fmt.Println(romName)
-		c.initMem(romName)
+		c.loadRom(romName)
 		return nil
 	})
+
 	js.Global().Get("document").Call("addEventListener", "keydown", cb)
 	js.Global().Get("document").Call("addEventListener", "keyup", cb2)
+	getElementByID("roms").Set("value", "INVADERS")
 	getElementByID("roms").Call("addEventListener", "change", cb3)
+	runButton := getElementByID("run")
+	cb4 := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if c.running {
+			c.running = false
+			runButton.Set("innerHTML", "Start")
+		} else {
+			c.running = true
+			runButton.Set("innerHTML", "Stop")
+		}
+		return nil
+	})
+
+	runButton.Call("addEventListener", "click", cb4)
 }
 
 func initializeCanvas() {
@@ -95,27 +125,7 @@ func initializeCanvas() {
 	context.Call("fillRect", 0, 0, width, height)
 }
 
-// func (c *Chip8) initMem(this js.Value, inputs []js.Value) interface{} {
-// 	len := inputs[0].Get("byteLength")
-// 	c.interpreter.Reset()
-// 	for i := 0; i < len.Int(); i++ {
-// 		data := inputs[0].Call("getUint8", i)
-// 		c.interpreter.SetMemory(0x200+i, uint8(data.Int()))
-
-// 	}
-// 	return nil
-// }
-func (c *Chip8) initMem(rom string) interface{} {
-	err, buf := loadRom(rom)
-	fmt.Println(err)
-	c.interpreter.Reset()
-	for i := 0; i < len(buf); i++ {
-		c.interpreter.SetMemory(0x200+i, buf[i])
-	}
-	return nil
-}
-
-func (c *Chip8) updateDisplay(this js.Value, inputs []js.Value) interface{} {
+func (c *Chip8) updateDisplay() interface{} {
 	canvas := getElementByID("canvas")
 	context := canvas.Call("getContext", "2d")
 	image := context.Call("createImageData", width, height)
@@ -138,12 +148,12 @@ func (c *Chip8) updateDisplay(this js.Value, inputs []js.Value) interface{} {
 	return nil
 }
 
-func (c *Chip8) executeCycle(this js.Value, inputs []js.Value) interface{} {
+func (c *Chip8) executeCycle() interface{} {
 	c.interpreter.Cycle()
 	return nil
 }
 
-func (c *Chip8) decrementTimers(this js.Value, inputs []js.Value) interface{} {
+func (c *Chip8) decrementTimers() interface{} {
 	c.interpreter.DecrementTimers()
 	return nil
 }
@@ -160,22 +170,26 @@ func (c *Chip8) keyDown(key int) interface{} {
 
 // MyGoFunc fetches an external resource by making a HTTP request from Go
 // The JavaScript method accepts one argument, which is the URL to request
-func loadRom(rom string) (error, []byte) {
-	resp, err := http.Get("/roms/" + rom)
-	if err != nil {
-		return err, nil
-	}
-	defer resp.Body.Close()
+func (c *Chip8) loadRom(rom string) {
+	go func() {
+		resp, err := http.Get("/roms/" + rom)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		err = fmt.Errorf("response status code: %d", resp.StatusCode)
-		return err, nil
-	}
+		if resp.StatusCode != 200 {
+			err = fmt.Errorf("response status code: %d", resp.StatusCode)
+			return
+		}
 
-	romContent, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err, nil
-	}
-	fmt.Println("fetch done")
-	return nil, romContent
+		romContent, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		c.interpreter.Reset()
+		for i := 0; i < len(romContent); i++ {
+			c.interpreter.SetMemory(0x200+i, romContent[i])
+		}
+	}()
 }

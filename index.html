@@ -114,11 +114,11 @@
         inst = result.instance;
         // how to wait go-main function to be done?
         run();
-        $('#roms')[0].value = 'INVADERS';
+        // $('#roms')[0].value = 'INVADERS';
         // loadRom('INVADERS');
         // updateDisplay();
-        window.requestAnimationFrame(runLoop);
-        runLoop();
+        // window.requestAnimationFrame(runLoop);
+        // runLoop();
       });
 
       async function run() {
@@ -170,29 +170,29 @@
       //   loadRom(e.target.value);
       // });
 
-      let running = false;
-      const runLoop = () => {
-        console.log(123);
-        if (running) {
-          for (var i = 0; i < 8; i++) {
-            executeCycle();
-          }
-          decrementTimers();
-        }
-        updateDisplay();
-        window.requestAnimationFrame(runLoop);
-      };
+      // let running = false;
+      // const runLoop = () => {
+      //   console.log(123);
+      //   if (running) {
+      //     for (var i = 0; i < 10; i++) {
+      //       executeCycle();
+      //     }
+      //     decrementTimers();
+      //   }
+      //   updateDisplay();
+      //   window.requestAnimationFrame(runLoop);
+      // };
 
-      const runButton = document.getElementById('run');
-      runButton.addEventListener('click', () => {
-        if (running) {
-          running = false;
-          runButton.innerHTML = 'Start';
-        } else {
-          running = true;
-          runButton.innerHTML = 'Stop';
-        }
-      });
+      // const runButton = document.getElementById('run');
+      // runButton.addEventListener('click', () => {
+      //   if (running) {
+      //     running = false;
+      //     runButton.innerHTML = 'Start';
+      //   } else {
+      //     running = true;
+      //     runButton.innerHTML = 'Stop';
+      //   }
+      // });
 
       // const translateKeys = {
       //   49: 0x1, // 1
