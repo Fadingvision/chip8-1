@@ -99,32 +99,22 @@
         ></canvas>
       </div>
     </div>
-    <script src="jquery-3.2.1.min.js"></script>
-
     <script src="wasm_exec.js"></script>
 
     <script>
       const go = new Go();
-      let mod, inst, bytes;
+      let inst;
       WebAssembly.instantiateStreaming(
         fetch('chip8.wasm'),
         go.importObject
       ).then(async (result) => {
-        mod = result.module;
-        inst = result.instance;
-        // how to wait go-main function to be done?
-        run();
+        go.run(result.instance);
         // $('#roms')[0].value = 'INVADERS';
         // loadRom('INVADERS');
         // updateDisplay();
         // window.requestAnimationFrame(runLoop);
         // runLoop();
       });
-
-      async function run() {
-        await go.run(inst);
-      }
-
       // const ROMS = [
       //   '15PUZZLE',
       //   'BLINKY',
